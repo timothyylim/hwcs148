@@ -6,6 +6,11 @@
  comment: why is euler integrator stable?
  error: velocity verlet integrator gains energy
  comment: control torque, not time, should not be used in equation of motion
+ regrade: can we debug assignment and discuss concepts during office hours?
+ error: euler integrator is incorrect
+ comment: double check each variable and its use in time
+ error: velocity verlet integrator gains energy
+ comment: control torque, not time, should not be used in equation of motion
  
  Assignment 3: CANCELLED
  
