@@ -19,6 +19,7 @@ robot.base = "link1";
 // specify and create data objects for the links of the robot
 robot.links = {"link1": {}, "link2": {}, "link3": {}, "link4": {} };
 
+
 //////////////////////////////////////////////////
 /////     DEFINE JOINTS AND KINEMATIC HIERARCHY
 //////////////////////////////////////////////////

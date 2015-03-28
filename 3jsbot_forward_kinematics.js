@@ -17,5 +17,11 @@ traverse_forward_kinematics_link
 traverse_forward_kinematics_joint
 compute_and_draw_heading
 */
+ function robot_forward_kinematics () {
+ 	
+ 	mstack = generate_identity();
+ 	traverse_base_link("link1", mstack);
+    
 
+ }
 
