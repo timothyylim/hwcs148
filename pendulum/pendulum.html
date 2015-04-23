@@ -127,9 +127,8 @@ function animate() {
         
         pendulum.angle = pendulum.angle + pendulum.angle_dot*dt + 0.5*acceleration*dt*dt;
 
-        acceleration2 = -gravity/pendulum.length*Math.sin(pendulum.angle) + pendulum.control/(pendulum.mass*pendulum.length*pendulum.length);
 
-        pendulum.angle_dot = pendulum.angle_dot + ((acceleration + acceleration2)/2)*dt;
+        pendulum.angle_dot = pendulum.angle_dot + ((acceleration + (-gravity/pendulum.length*Math.sin(pendulum.angle) + pendulum.control/(pendulum.mass*pendulum.length*pendulum.length))))/2)*dt;
 
 
     }
