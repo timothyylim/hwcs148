@@ -17,95 +17,100 @@ traverse_forward_kinematics_link
 traverse_forward_kinematics_joint
 compute_and_draw_heading
 */
+
+
 function robot_forward_kinematics () {
  	
  	mstack = generate_identity();
- 	traverse_base_link("link1", mstack);
+ 	traverse_forward_kinematics_base_link(robot.base, mstack);
  }
 
-function transform_joint(joint,mstack) {
+
+function joint_transform(joint,mstack) {
 	
-	var x = robot.joints[joint].origin.xyz[0];
-    var y = robot.joints[joint].origin.xyz[1];
-    var z = robot.joints[joint].origin.xyz[2];
-    var r = robot.joints[joint].origin.rpy[0];
-    var p = robot.joints[joint].origin.rpy[1];
-    var rot_y = robot.joints[joint].origin.rpy[2];
+	x = robot.joints[joint].origin.xyz[0];
+    y = robot.joints[joint].origin.xyz[1];
+    z = robot.joints[joint].origin.xyz[2];
+    r = robot.joints[joint].origin.rpy[0];
+    p = robot.joints[joint].origin.rpy[1];
+    rot_y = robot.joints[joint].origin.rpy[2];
 
-    var result = multiplyMatrices(mstack,generate_matrix_transform(x,y,z,r,p,rot_y));
-    var tempmat = matrix_2Darray_to_threejs(result);
+    
+    temp_matrix = matrix_2Darray_to_threejs(multiplyMatrices(mstack,generate_matrix_transform(x,y,z,r,p,rot_y)));
 
-    simpleApplyMatrix(robot.joints[joint].geom,tempmat);
+    simpleApplyMatrix(robot.joints[joint].geom, temp_matrix);
 
-    return result;
+    return multiplyMatrices(mstack,generate_matrix_transform(x,y,z,r,p,rot_y));
 }
 
-function transform_link(link,mstack) {
+function link_transform(link,mstack) {
 	
-	if (link == "link1") {
+	if (link == robot.base) {
 
-		var link = robot.base;
-		var x = robot.origin.xyz[0];
-	    var y = robot.origin.xyz[1];
-	    var z = robot.origin.xyz[2];
-	    var r = robot.origin.rpy[0];
-	    var p = robot.origin.rpy[1];
-	    var rot_y = robot.origin.rpy[2];
+		link = robot.base;
+		x = robot.origin.xyz[0];
+	    y = robot.origin.xyz[1];
+	    z = robot.origin.xyz[2];
+	    r = robot.origin.rpy[0];
+	    p = robot.origin.rpy[1];
+	    rot_y = robot.origin.rpy[2];
 
-	    result = multiplyMatrices(mstack,generate_matrix_transform(x,y,z,r,p,rot_y));
-	    var tempmat = matrix_2Darray_to_threejs(result);
+	    temp_matrix = matrix_2Darray_to_threejs(multiplyMatrices(mstack,generate_matrix_transform(x,y,z,r,p,rot_y)));
 	    
-	    simpleApplyMatrix(robot.links[link].geom,tempmat);
+	    simpleApplyMatrix(robot.links[link].geom,temp_matrix);
    		
-   		return result;
+   		return multiplyMatrices(mstack,generate_matrix_transform(x,y,z,r,p,rot_y));
 	}
 
-	var joint = robot.links[link].parent_joint;
-	var x = robot.joints[joint].origin.xyz[0];
-    var y = robot.joints[joint].origin.xyz[1];
-    var z = robot.joints[joint].origin.xyz[2];
-    var r = robot.joints[joint].origin.rpy[0];
-    var p = robot.joints[joint].origin.rpy[1];
-    var rot_y = robot.joints[joint].origin.rpy[2];
+	joint = robot.links[link].parent_joint;
+	x = robot.joints[joint].origin.xyz[0];
+    y = robot.joints[joint].origin.xyz[1];
+    z = robot.joints[joint].origin.xyz[2];
+    r = robot.joints[joint].origin.rpy[0];
+    p = robot.joints[joint].origin.rpy[1];
+    rot_y = robot.joints[joint].origin.rpy[2];
 
-    result = multiplyMatrices(mstack,generate_matrix_transform(x,y,z,r,p,rot_y));
-    var tempmat = matrix_2Darray_to_threejs(result);
     
-    simpleApplyMatrix(robot.links[link].geom,tempmat);
+    temp_matrix = matrix_2Darray_to_threejs(multiplyMatrices(mstack,generate_matrix_transform(x,y,z,r,p,rot_y)));
+    
 
-    return result;
+    simpleApplyMatrix(robot.links[link].geom,temp_matrix);
+
+    return multiplyMatrices(mstack,generate_matrix_transform(x,y,z,r,p,rot_y));
 }
 
+function traverse_forward_kinematics_base_link(link,mstack) {
 
-function traverse_base_link(link,mstack) {
-
-	mstack = transform_link(link,mstack);
+	mstack = link_transform(link,mstack);
 	limit = robot.links[link].children.length;
 	
 	for (i = (0); i < limit; i++) { 
 		joint = robot.links[link].children[i];
 		
 		if (joint != undefined) {
-			traverse_joint(joint, mstack);
+			traverse_forward_kinematics_joint(joint, mstack);
 		}
 	}
 
 }
 
-function traverse_child_links(link, mstack) {
 
-	mstack = transform_link(link,mstack);
+function traverse_forward_kinematics_link(link, mstack) {
+
+	mstack = link_transform(link,mstack);
+
 	joint = robot.links[link].children[0];
 	
 	if (joint != undefined) {
-		traverse_joint(joint, mstack);
+		traverse_forward_kinematics_joint(joint, mstack);
 	}
 }
 
 
-function traverse_joint(joint,mstack) {
+function traverse_forward_kinematics_joint(joint,mstack) {
 
-	transform_joint(joint,mstack);
+	joint_transform(joint,mstack);
 	var link = robot.joints[joint].child;
-	traverse_child_links(link, mstack)
+
+	traverse_forward_kinematics_link(link, mstack)
 }

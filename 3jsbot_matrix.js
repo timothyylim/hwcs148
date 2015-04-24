@@ -21,13 +21,13 @@ function multiplyMatrices(first, second) {
     var newMatrix = [],
         newWidth = second[0].length,
         newHeight = first.length;
-    //iterating through first matrix rows
+
     for (var row = 0; row < newHeight; row++) {
         newMatrix[row] = [];
-        //iterating through second matrix columns
+
         for (var column = 0; column < newWidth; column++) { 
             var sum = 0;
-            //calculating sum of pairwise products
+            
             for (var index = 0; index < first[0].length; index++) {
                 sum += first[row][index] * second[index][column];
             }
