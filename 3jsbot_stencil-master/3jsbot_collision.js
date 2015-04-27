@@ -105,14 +105,10 @@ function robot_collision_forward_kinematics (q) {
 
 function traverse_collision_forward_kinematics_link(link,mstack,q) {
 
-    // test collision by transforming obstacles in world to link space
-    mstack_inv = matrix_invert_affine(mstack);
-/*
-    mstack_inv = numeric.inv(mstack);
-*/
+    console.log(mstack)
 
-    var i;
-    var j;
+    mstack_inv = numeric.inv(mstack);
+
 
     // test each obstacle against link bbox geometry by transforming obstacle into link frame and testing against axis aligned bounding box
     for (j=0;j<robot_obstacles.length;j++) { 
@@ -172,12 +168,18 @@ function traverse_collision_forward_kinematics_joint(joint,mstack,q) {
 
     // transform motor rotation by quaternion for axis-angle joint rotation
     var tempvec = [joint.axis[0],joint.axis[1],joint.axis[2]]; 
+
+
     var tempquat = quaternion_from_axisangle(tempvec,q[q_names[joint.name]]);
+
+
+
     var joint_local_quat = quaternion_normalize(tempquat);
 
     // push joint angle transform to the top of the matrix stack
     var joint_local_xform = quaternion_to_rotation_matrix(joint_local_quat);
     var mstack_top = matrix_multiply(mstack_origin_top,joint_local_xform); 
+
 
     // recursively traverse child link with the current_xform being top of matrix stack 
     return traverse_collision_forward_kinematics_link(robot.links[joint.child],mstack_top,q);

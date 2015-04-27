@@ -15,6 +15,27 @@ function robot_apply_controls() {
     camera_controls.object.position.y += robot.control.xyz[1];
     camera_controls.object.position.z += robot.control.xyz[2];
 
+    //Base Motion
+	robot.origin.xyz[0] += robot.control.xyz[0];
+	robot.origin.xyz[1] += robot.control.xyz[1];
+	robot.origin.xyz[2] += robot.control.xyz[2];
+	robot.origin.rpy[0] += robot.control.rpy[0];
+	robot.origin.rpy[1] += robot.control.rpy[1];
+	robot.origin.rpy[2] += robot.control.rpy[2];
+
+    // Motor Rotation
+    for (x in robot.joints) {
+    	robot.joints[x].angle += robot.joints[x].control;
+    	robot.joints[x].control = 0;
+    }
+
+    //Resetting the controls
+    robot.control.xyz[0] = 0;
+	robot.control.xyz[1] = 0;
+	robot.control.xyz[2] = 0;
+	robot.control.rpy[0] = 0;
+	robot.control.rpy[1] = 0;
+	robot.control.rpy[2] = 0;
 }
 
 

@@ -30,7 +30,6 @@ robot.links = {
 , "shoulder_left": {}  , "upperarm_left": {} , "forearm_left": {} };
 */
 
-
 //////////////////////////////////////////////////
 /////     DEFINE JOINTS AND KINEMATIC HIERARCHY
 //////////////////////////////////////////////////
