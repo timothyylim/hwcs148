@@ -18,6 +18,7 @@ function init_keyboard_events() {
 }
 
 function handle_keydown(keycode) {
+    // console.log(active_joint);
     //console.log("handle_keydown: "+keycode);
     switch (keycode) { // h:72 j:74 k:75 l:76
     case 74: // j 
@@ -50,7 +51,7 @@ function user_input() {
         robot.joints[active_joint].control += -0.01;  // add motion increment 
     }
 
-    /* CS148: user input for base movement
+    // CS148: user input for base movement
     // move robot base in the ground plane
     if ( keyboard.pressed("a") ) {  // turn
         robot.control.rpy[1] += 0.1;
@@ -60,17 +61,17 @@ function user_input() {
     }
 
     if ( keyboard.pressed("w") ) {  // forward
-        //robot.origin.xyz[2] += 0.1;  // simple but ineffective: not aligned with robot
+        // robot.control.xyz[2] += 0.1;  // simple but ineffective: not aligned with robot
         robot.control.xyz[2] += 0.1 * (robot_heading[2][0]-robot.origin.xyz[2]);
         robot.control.xyz[0] += 0.1 * (robot_heading[0][0]-robot.origin.xyz[0]);
     }
     if ( keyboard.pressed("s") ) {  // backward
-        //robot.origin.xyz[2] -= 0.1; // simple but ineffective: not aligned with robot
+        // robot.control.xyz[2] -= 0.1; // simple but ineffective: not aligned with robot
         robot.control.xyz[2] += -0.1 * (robot_heading[2][0]-robot.origin.xyz[2]);
         robot.control.xyz[0] += -0.1 * (robot_heading[0][0]-robot.origin.xyz[0]);
     }
     if ( keyboard.pressed("q") ) {  // strafe
-        //robot.origin.xyz[0] += 0.1; // simple but ineffective: not aligned with robot
+        // robot.origin.xyz[0] += 0.1; // simple but ineffective: not aligned with robot
 
         robot.control.xyz[2] += 0.1 * (robot_lateral[2][0]-robot.origin.xyz[2]);
         robot.control.xyz[0] += 0.1 * (robot_lateral[0][0]-robot.origin.xyz[0]);
@@ -102,8 +103,6 @@ function user_input() {
 
 function change_active_link_down() {
     if (typeof robot.links[robot.joints[active_joint].child].children !== 'undefined') {
-
-
         if (robot.links[robot.joints[active_joint].child].children.length !== 0) {
      
             robot.joints[active_joint].display_geom.material.opacity = 1.0; 
@@ -117,10 +116,15 @@ function change_active_link_down() {
 }
 
 function change_active_link_up() {
+    // console.log(active_link);
+    // console.log(active_joint);
+    //console.log(robot.base);
     if (active_link !== robot.base) {
         robot.joints[active_joint].display_geom.material.opacity = 1.0; 
 
-        active_joint = robot.links[active_link].parent;
+        console.log(active_link);
+        active_joint = robot.links[active_link].parent_joint;
+
         active_link = robot.joints[active_joint].parent;
 
         robot.joints[active_joint].display_geom.material.opacity = 0.5; 
