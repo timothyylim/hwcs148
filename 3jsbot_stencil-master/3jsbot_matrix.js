@@ -61,51 +61,6 @@ function transpose(matrix) {
 	return result;
 }
 
-function quaternion_normalize(matrix){
-	sum = 0;
-	n = 0;
-	result = [];
-
-	//1-d Matrix
-	if (matrix[0].length == undefined) {
-		for (var i = 0; i < matrix.length; i++) {
-			a = matrix[i]
-	    	a = a*a;
-	    	sum += a;
-	    	n += 1;
-
-	    	len = Math.sqrt(sum)
-		}
-
-		for (var i = 0; i < matrix.length; i++) {
-			result[i] = matrix[i]/len;
-		}
-		return result
-	}
-
-	//Multiple Dimensions
-    for (var i = 0; i < matrix.length; i++) {
-	    for (var j = 0; j < matrix[0].length; j++) {
-			a = matrix[i][j]
-	    	a = a*a;
-	    	sum += a;
-	    	n += 1;
-
-	    	len = Math.sqrt(sum)
-	    }
-	}
-	
-    for (var i = 0; i < matrix.length; i++) {
-    	result[i] = [];  
-	    for (var j = 0; j < matrix[0].length; j++) {
-	    	result[i][j] = matrix[i][j]/len;
-	    }
-	}
-
-	return result;
-
-}
-
 
 function generate_identity() {
 	var result = []

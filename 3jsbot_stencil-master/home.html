@@ -36,9 +36,9 @@
 <!-- CS148: change this script pointer to change the robot definition -->
 
 <!-- <script src="robots/robot_urdf_example.js"></script>  -->
-<!-- <script src="robots/robot_crawler.js"></script>  -->
+<script src="robots/robot_crawler.js"></script> 
 
-<script src="robots/robot_br2.js"></script> 
+<!-- <script src="robots/robot_br2.js"></script>  -->
 
 <!-- 3jsbot includes -->
 <script src="3jsbot.js"></script> 
@@ -46,7 +46,7 @@
 <script src="3jsbot_forward_kinematics.js"></script> 
 <script src="3jsbot_controls.js"></script> 
 <script src="3jsbot_pd_control.js"></script> 
-<script src="3jsbot_inverse_kinematics.js"></script> 
+<!-- <script src="3jsbot_inverse_kinematics.js"></script>  -->
 <!-- <script src="3jsbot_potential_field.js"></script>  -->
 <script src="3jsbot_rrt_connect.js"></script> 
 <script src="3jsbot_matrix.js"></script> 
@@ -54,10 +54,6 @@
 
 <script src="3jsbot_threejs.js"></script> 
 <script src="3jsbot_userinput.js"></script> 
-
-<!-- Adding scripts for the final assignment -->
-<script src="3jsbot_collision.js"></script> 
-<script src="worlds/world_basic.js"></script>
 
 <script src="worlds/world_empty.js"></script>
 <!-- <script src="worlds/world_random.js"></script> -->
@@ -140,14 +136,16 @@ function init_robot() {
     // initialize inverse kinematics target location 
     ik_target = [[0],[0.8],[1.0],[1]];
 
-    //Initializing movement control
-    robot.control = {xyz: [0,0,0], rpy:[0,0,0]};
-    robot_heading = [];
+    //Initialze control for robot
     robot_lateral = [];
+    robot_heading = [];
 
-    robot_set_planning_scene();
 
-    robot_iscollision();
+    robot.control = {xyz: [0,0,0], rpy:[0,0,0]};
+
+    // robot_set_planning_scene();
+
+    // robot_iscollision();
 
 
 
@@ -207,15 +205,12 @@ function init_robot_joints() {
 
 
 
-        //To initialize the angle and control as 0
+        //Assignment 6
         robot.joints[x].control = 0;
+
+        robot.joints[x].desired = Math.PI*0.7;
+        
         robot.joints[x].angle = 0;
-
-        //For the PID Controller
-        robot.joints[x].desired = Math.PI/2.5;
-
-        //To store the real world xform of every joint
-        robot.joints[x].xform = [];
 
     }
 
@@ -285,7 +280,7 @@ function my_animate() {
     //robot_potential_field(x_desired);
 
     //Assignment 7
-    robot_iscollision();
+    // robot_iscollision();
 
 }
 
