@@ -133,16 +133,19 @@ function animate() {
     } 
     else {
         // euler integration
-
         numerical_integrator = "euler";
-        dt = 0.1;
+        dt = 0.01;
      	
-     
-     	
-     	acc = -gravity/pendulum.length*Math.sin(pendulum.angle) + pendulum.control/(pendulum.mass*pendulum.length*pendulum.length);
+        sin_theta = Math.sin(pendulum.angle)
+        l_sqaured = pendulum.length*pendulum.length
+        mass = pendulum.mass
+        tau = pendulum.control
+
+     	acc = -(gravity/pendulum.length)*sin_theta + tau/(mass*l_sqaured);
     	
         pendulum.angle = pendulum.angle + pendulum.angle_dot*dt;
-    	pendulum.angle_dot = pendulum.angle_dot + acc;
+
+        pendulum.angle_dot = pendulum.angle_dot + acc;
     }
 
     // set the current state/angle of the pendulum
