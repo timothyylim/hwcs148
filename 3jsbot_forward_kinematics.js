@@ -65,6 +65,28 @@ function transform_link(link,mstack) {
 	    robot_heading = matrix_multiply(result,heading_local);
 
 
+	    if (typeof heading_geom === 'undefined') {
+            var temp_geom = new THREE.CubeGeometry(0.3, 0.3, 0.3);
+
+            var temp_material = new THREE.MeshBasicMaterial( {color: 0x00ffff} )
+            heading_geom = new THREE.Mesh(temp_geom, temp_material);
+            scene.add(heading_geom);
+        }
+        a = generate_translation_matrix(robot_heading[0], robot_heading[1], robot_heading[2]);
+        tempmat = matrix_2Darray_to_threejs(a);
+
+        
+       	simpleApplyMatrix(heading_geom,tempmat);
+        if (typeof lateral_geom === 'undefined') {
+            var temp_geom = new THREE.CubeGeometry(0.3, 0.3, 0.3);
+            var temp_material = new THREE.MeshBasicMaterial( {color: 0x008888} )
+            lateral_geom = new THREE.Mesh(temp_geom, temp_material);
+            scene.add(lateral_geom);
+        }
+        b = generate_translation_matrix(robot_lateral[0], robot_lateral[1], robot_lateral[2]);
+        tempmat = matrix_2Darray_to_threejs(b);
+       	simpleApplyMatrix(lateral_geom,tempmat);
+
    		return result;
 
 	}
