@@ -25,14 +25,14 @@ function robot_inverse_kinematics(target_pos, endeffector_joint, endeffector_loc
     }
 
     //Setting Target Geom
-   	result = generate_translation_matrix(target_pos[0], target_pos[1], target_pos[2]);
-	tempmat = matrix_2Darray_to_threejs(result);
+   	output = generate_translation_matrix(target_pos[0], target_pos[1], target_pos[2]);
+	tempmat = matrix_2Darray_to_threejs(output);
 	simpleApplyMatrix(target_geom,tempmat);
 
 	//Setting Endeffector Geom
-	result = matrix_multiply(robot.joints[endeffector_joint].xform,endeffector_local_pos);
-   	result = generate_translation_matrix(result[0], result[1], result[2]);
-   	tempmat = matrix_2Darray_to_threejs(result);
+	output = matrix_multiply(robot.joints[endeffector_joint].xform,endeffector_local_pos);
+   	output = generate_translation_matrix(output[0], output[1], output[2]);
+   	tempmat = matrix_2Darray_to_threejs(output);
 	simpleApplyMatrix(endeffector_geom,tempmat);
 
     update_ik = false;
@@ -41,40 +41,38 @@ function robot_inverse_kinematics(target_pos, endeffector_joint, endeffector_loc
 
 function iterate_inverse_kinematics(target_pos, endeffector_joint, endeffector_local_pos) {
 	
-	//Creating array to hold all the joints in the kinematic hierarchy
-	parents = [];
+	p = [];
+
+	arrayDiff = []
+
 	a = robot.joints[endeffector_joint].parent;
 	while (a != 'base') {
 		b = robot.links[a].parent_joint;
 		a = robot.joints[b].parent; 
-		parents.unshift(b);
+		p.unshift(b);
 	}
 
-	parents.push(endeffector_joint);
+	p.push(endeffector_joint);
 
-	//Creating an Empty 6*N Jacobian Matrix
 	var Jacobian = new Array(6);
 
 	for (var i = 0; i < 6; i++) {
-		Jacobian[i] = new Array(parents.length);
+		Jacobian[i] = new Array(p.length);
 	}
 
-	//Transforming the endeffector_local_pos to world coordinates
 	ik = matrix_multiply(robot.joints[endeffector_joint].xform,endeffector_local_pos);
 
 
-	//Setting the column vectors in the Jacobian, Ji
-	for (i = 0; i < (parents.length); i++) { 
-		joint = parents[i];
+	for (i = 0; i < (p.length); i++) { 
+		joint = p[i];
 		cross = [];
 
-		//Transforming joints coordinate to the world frame
 		a = transpose([0,0,0,1]);
 		m = robot.joints[joint].xform;
 		worldframe = matrix_multiply(m,a);
 		rotationMatrix = [];
 
-		//Creating Rotation Matrix
+
 		for (k = 0; k < (m.length-1); k++) {
 			rotationMatrix[k] = [];
 			for (var j = 0; j < m[0].length-1; j++) {
@@ -82,19 +80,16 @@ function iterate_inverse_kinematics(target_pos, endeffector_joint, endeffector_l
 			}
 		}
 
-		//Transforming axis to world frame
 	    axis = matrix_multiply(rotationMatrix,transpose(robot.joints[joint].axis));
 	    axis[0] = axis[0][0]; 
 	    axis[1] = axis[1][0]; 
 	    axis[2] = axis[2][0]; 
 
-	    //Calculating the cross the product for the Jacobian Matrix
-	    difference_array = []
-	    difference_array[0] = ik[0][0] - worldframe[0][0];
-	    difference_array[1] = ik[1][0] - worldframe[1][0];  
-	    difference_array[2] = ik[2][0] - worldframe[2][0];
+	    arrayDiff[0] = ik[0][0] - worldframe[0][0];
+	    arrayDiff[1] = ik[1][0] - worldframe[1][0];  
+	    arrayDiff[2] = ik[2][0] - worldframe[2][0];
 
-	    cross = vector_cross(axis,difference_array);
+	    cross = vector_cross(axis,arrayDiff);
 
 	    //Assigning values to the Jacobian Matrix
 	    Jacobian[0][i] = cross[0];
@@ -107,30 +102,29 @@ function iterate_inverse_kinematics(target_pos, endeffector_joint, endeffector_l
   	}
   	
 	jacobianTranpose = transpose(Jacobian);
-
-	//////FOR THE PSEUDOINVERSE CASE/////
+	// Uncomment for pseudoInverse case
 	// jacobianTranpose = pseudoInverse(Jacobian);
 
-	//Calculating delta x
 	delta_x = [[0],[0],[0],[0],[0],[0]];
 
-	x = target_pos[0][0] - ik[0][0];
 	y = target_pos[1][0] - ik[1][0];
 	z = target_pos[2][0] - ik[2][0];
+	x = target_pos[0][0] - ik[0][0];
 
 	delta_x[0][0] = x; 
 	delta_x[1][0] = y;
 	delta_x[2][0] = z;
 
-	//Storing the control values for the angles of the joints
 	joint_controls = [];
 	joint_controls = matrix_multiply(jacobianTranpose,delta_x);
 
-	//Assigning control values to joints along the kinematic hierarchy
-	for (i = 0; i < (parents.length); i++) { 
-  		joint = parents[i];
+	i = 0;
+	while (i < p.length){
+  		joint = p[i];
   		robot.joints[joint].control += 0.1*joint_controls[i];
-  	}
+  		i = i+1;
+	}
+
 }
 
 function pseudoInverse(Jacobian) {
