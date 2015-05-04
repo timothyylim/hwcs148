@@ -28,7 +28,6 @@ function matrix_multiply(m1, m2) {
             result[i][j] = sum;
         }
     }
-    // console.log(result);
     return result;
 }
 
@@ -60,7 +59,6 @@ function transpose(matrix) {
 	}
 	return result;
 }
-
 
 function generate_identity() {
 	var result = []

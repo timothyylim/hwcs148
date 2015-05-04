@@ -36,9 +36,9 @@
 <!-- CS148: change this script pointer to change the robot definition -->
 
 <!-- <script src="robots/robot_urdf_example.js"></script>  -->
-<script src="robots/robot_crawler.js"></script> 
+<!-- <script src="robots/robot_crawler.js"></script>  -->
 
-<!-- <script src="robots/robot_br2.js"></script>  -->
+<script src="robots/robot_br2.js"></script> 
 
 <!-- 3jsbot includes -->
 <script src="3jsbot.js"></script> 
@@ -46,7 +46,7 @@
 <script src="3jsbot_forward_kinematics.js"></script> 
 <script src="3jsbot_controls.js"></script> 
 <script src="3jsbot_pd_control.js"></script> 
-<!-- <script src="3jsbot_inverse_kinematics.js"></script>  -->
+<script src="3jsbot_inverse_kinematics.js"></script> 
 <!-- <script src="3jsbot_potential_field.js"></script>  -->
 <script src="3jsbot_rrt_connect.js"></script> 
 <script src="3jsbot_matrix.js"></script> 
@@ -55,10 +55,14 @@
 <script src="3jsbot_threejs.js"></script> 
 <script src="3jsbot_userinput.js"></script> 
 
-<script src="worlds/world_empty.js"></script>
+<!-- Adding scripts for the final assignment -->
+<script src="3jsbot_collision.js"></script> 
+
+<!-- <script src="worlds/world_basic.js"></script> -->
+<!-- <script src="worlds/world_empty.js"></script> -->
 <!-- <script src="worlds/world_random.js"></script> -->
 <!-- <script src="worlds/world_local_minima.js"></script> -->
-<!-- <script src="worlds/world_s.js"></script> -->
+<script src="worlds/world_s.js"></script>
 
 
 <script>
@@ -136,24 +140,25 @@ function init_robot() {
     // initialize inverse kinematics target location 
     ik_target = [[0],[0.8],[1.0],[1]];
 
-    //Initialze control for robot
-    robot_lateral = [];
-    robot_heading = [];
+    // ik_endeffector = "forearm_right_yaw";
+    ik_local = [[0],[0],[0.5],[1]];
 
-
+    //Initializing movement control
     robot.control = {xyz: [0,0,0], rpy:[0,0,0]};
+    robot_heading = [];
+    robot_lateral = [];
 
+    //Assignment 7
+
+    // set scene for planner
     // robot_set_planning_scene();
 
-    // robot_iscollision();
+    // // initialize flags for executing planner
+    // generating_motion_plan = false;
+    // generate_motion_plan = false;
 
-
-
-
-    
-
-
-
+    // robot_path = [];
+    // robot_path_traverse_idx = 0;
 }
 
 // CS148: nothing to add here 
@@ -165,9 +170,6 @@ function init_robot_links() {
 
     // CS148: do not remove, this is used to create threejs geometries
     init_robot_links_geoms();
-
-    // initialize controls for robot base link
-    robot.control = {xyz: [0,0,0], rpy:[0,0,0]}; 
 }
 
 
@@ -179,8 +181,6 @@ function init_robot_joints() {
     // NOTE: kinematic hierarchy is maintained independently by this code, not threejs
     // NOTE: simpleApplyMatrix can be used to set threejs transform for a rendered object
 
-    var x,tempmat;
-
     for (x in robot.links) {
         //Creating an array to hold the links children
         robot.links[x].children = [];
@@ -190,8 +190,6 @@ function init_robot_joints() {
     for (x in robot.joints) {
 
         // CONSTRUCT KINEMATIC HIERARCHY
-
-        // Set joint name 
         robot.joints[x].name = x;
 
         // To decorate the links with their children
@@ -203,14 +201,18 @@ function init_robot_joints() {
         a = robot.joints[x].child;
         robot.links[a].parent_joint = x;
 
-
-
-        //Assignment 6
+        //To initialize the angle and control as 0
         robot.joints[x].control = 0;
-
-        robot.joints[x].desired = Math.PI*0.7;
-        
         robot.joints[x].angle = 0;
+
+        //For the PID Controller
+        // var curdate = new Date();
+		// dt = curdate.getSeconds()/(60*2*Math.PI);
+        // robot.joints[x].desired = Math.PI/2.5;
+        // robot.joints[x].desired = curdate.getSeconds()/60*2*Math.PI;
+
+        //To store the real world xform of every joint
+        robot.joints[x].xform = [];
 
     }
 
@@ -226,20 +228,6 @@ function init_robot_joints() {
 //////////////////////////////////////////////////
 function my_animate() {
 
-    //Places all the links and joints at the origin
-    /*    
-	var jsmat =  generate_identity();
-
-    for (x in robot.joints) {
-        threemat = matrix_2Darray_to_threejs(jsmat); 
-        simpleApplyMatrix(robot.joints[x].geom,threemat);
-    } 
-
-    for (x in robot.links) {
-        threemat = matrix_2Darray_to_threejs(jsmat);
-        simpleApplyMatrix(robot.links[x].geom,threemat);
-    } 
-    */
     // ROBOT DYNAMICS 
 
     // apply robot controls to robot configuration (assuming pure kinematics for now)
@@ -259,14 +247,13 @@ function my_animate() {
     // UPDATE AUTONOMOUS CONTROLS 
 
     // proportional-derivative control 
-
     if (update_pd)
         robot_pd_control();
     update_pd = false;
 	
 
     // inverse kinematics
-    // robot_inverse_kinematics(ik_target, "forearm_right_yaw", ik_local);
+    robot_inverse_kinematics(ik_target, "forearm_right_yaw", ik_local);
 
     // configuration space motion planning
     //robot_rrt_connect(q_desired);
@@ -280,10 +267,26 @@ function my_animate() {
     //robot_potential_field(x_desired);
 
     //Assignment 7
+
     // robot_iscollision();
+    
+    // if ((generate_motion_plan) && (!generating_motion_plan)) {
+    //     robot_rrt_planner_init();
 
+    //     generating_motion_plan = true;
+    //     generate_motion_plan = false;
+    // }
+    // if (generating_motion_plan) {
+    //     //robot_rrt_connect(q_desired);
+    //     rrt_result = robot_rrt_planner_iterate();
+    //     // console.log(rrt_result);
+    //     if (rrt_result == "reached") {
+    //         //alert("home: reached");
+    //         generating_motion_plan = false;
+    //     }
+    // }
+    
 }
-
 
 //////////////////////////////////////////////////
 /////     HOMEWORK 1, COMMENTED OUT

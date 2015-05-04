@@ -44,6 +44,37 @@ function user_input() {
 
     /* CS148: user input for controlling joints */ 
     // incrment/decrement angle of active joint 
+
+// traverse generated motion plan
+    if ( keyboard.pressed("n") |  keyboard.pressed("b")) {
+        if (typeof robot_path !== 'undefined') {
+
+            // increment index
+            if ((keyboard.pressed("n"))&&(robot_path_traverse_idx < robot_path.length-1))
+                robot_path_traverse_idx++;
+
+            if ((keyboard.pressed("b"))&&(robot_path_traverse_idx > 0))
+                robot_path_traverse_idx--;
+
+             // set angle
+            robot.origin.xyz = [
+                robot_path[robot_path_traverse_idx].vertex[0],
+                robot_path[robot_path_traverse_idx].vertex[1],
+                robot_path[robot_path_traverse_idx].vertex[2]
+            ];
+
+            robot.origin.rpy = [
+                robot_path[robot_path_traverse_idx].vertex[3],
+                robot_path[robot_path_traverse_idx].vertex[4],
+                robot_path[robot_path_traverse_idx].vertex[5]
+            ];
+
+            for (x in robot.joints) {
+                //q_names[x] = q_start_config.length;
+                robot.joints[x].angle = robot_path[robot_path_traverse_idx].vertex[q_names[x]];
+            }
+        }
+    }
     if ( keyboard.pressed("u") ) {
         robot.joints[active_joint].control += 0.01;  // add motion increment 
     }
@@ -96,6 +127,12 @@ function user_input() {
         ik_target[1][0] += 0.01;
     if ( keyboard.pressed("f") )  // ik target down
         ik_target[1][0] -= 0.01;
+
+    //For Motion Planning
+    if ( keyboard.pressed("m") )
+        generate_motion_plan = true;
+    else
+        generate_motion_plan = false;
 }
 
 
