@@ -142,7 +142,7 @@ function init_robot_links_geoms() {
         // add to threejs scene graph (where kinematics are maintained independently)
         scene.add(robot.links[x].geom);
 
-        // Assignment 7 added 
+        //Adding for Assignment 7
         robot.links[x].bbox = new THREE.Box3;
         robot.links[x].bbox = robot.links[x].bbox.setFromPoints(robot.links[x].geom.geometry.vertices);
 

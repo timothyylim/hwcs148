@@ -57,6 +57,8 @@ function init() {
     pendulum.desired = -Math.PI/2.5;
     pendulum.desired_dot = 0;
 
+    // initialize pendulum PID servo gains
+    // pendulum.servo = {kp:10, kd:70, ki:30};
     pendulum.servo = {kp:9, kd:10, ki:9};
     accumulated_error = 0;
     error = 0;
@@ -74,9 +76,9 @@ function init() {
     acceleration2 = 0;
 
     // set method of numerical integration of dynamics
-    numerical_integrator = "euler";  // REQUIRED
+    // numerical_integrator = "euler";  // REQUIRED
     //numerical_integrator = "verlet";  // OPTIONAL
-     // numerical_integrator = "velocity verlet";  // REQUIRED
+    numerical_integrator = "velocity verlet";  // REQUIRED
     //numerical_integrator = "runge-kutta";  // OPTIONAL
 
     init_threejs_scene();
@@ -121,13 +123,26 @@ function animate() {
         // velocity version of verlet integration
         dt = 0.05;
 
-        acceleration = -gravity/pendulum.length*Math.sin(pendulum.angle) + pendulum.control/(pendulum.mass*pendulum.length*pendulum.length);
+        acceleration = (-gravity/pendulum.length)*Math.sin(pendulum.angle) + pendulum.control/(pendulum.mass*pendulum.length*pendulum.length);
         
         pendulum.angle = pendulum.angle + pendulum.angle_dot*dt + 0.5*acceleration*dt*dt;
-        pendulum.angle_dot = pendulum.angle_dot + ((acceleration + -gravity/pendulum.length*Math.sin(pendulum.angle) + pendulum.control/(pendulum.mass*pendulum.length*pendulum.length))/2)*dt;
 
+        acceleration2 = (-gravity/pendulum.length)*Math.sin(pendulum.angle) + pendulum.control/(pendulum.mass*pendulum.length*pendulum.length);
+
+        pendulum.angle_dot = pendulum.angle_dot + ((acceleration + acceleration2)/2)*dt;
+
+
+        //Pendulum Motor Control
+        error = pendulum.desired - pendulum.angle;
+
+        accumulated_error = accumulated_error + error*dt;
+        derivative_error = (error - last_error)/dt;
+        last_error = error;
+
+        pendulum.control = (pendulum.servo.kp*error) + (pendulum.servo.ki*accumulated_error) + (pendulum.servo.kd*derivative_error);
 
     }
+
     else if (numerical_integrator === "runge-kutta") {
         // RK4, fourth-order Runge-Kutta integration
     } 
@@ -135,28 +150,16 @@ function animate() {
         // euler integration
 
         numerical_integrator = "euler";
-        dt = 0.1;
+        dt = 0.001;
      	
-     
-     	
-     	acc = -gravity/pendulum.length*Math.sin(pendulum.angle) + pendulum.control/(pendulum.mass*pendulum.length*pendulum.length);
-    	
+     	acceleration = -gravity/pendulum.length*Math.sin(pendulum.angle) + pendulum.control/(pendulum.mass*pendulum.length*pendulum.length);
+
         pendulum.angle = pendulum.angle + pendulum.angle_dot*dt;
-    	pendulum.angle_dot = pendulum.angle_dot + acc;
+    	pendulum.angle_dot = pendulum.angle_dot + acceleration;
     }
 
     // set the current state/angle of the pendulum
     pendulum.geom.rotation.y = pendulum.angle;  // threejs cylinders have their axes along the y-axis
-
-
-    //Pendulum Motor Control
-    error = pendulum.desired - pendulum.angle;
-
-    accumulated_error = accumulated_error + error*dt;
-    derivative_error = (error - last_error)/dt;
-    last_error = error;
-
-    pendulum.control = (pendulum.servo.kp*error) + (pendulum.servo.ki*accumulated_error) + (pendulum.servo.kd*derivative_error);
 
     // don't forget to advance time
     t = t + dt;

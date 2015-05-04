@@ -69,22 +69,50 @@ function init() {
 
 
     // specify start and goal configurations
-    q_start_config = [0,0];
+    q_start_config = [0, 0];
     q_goal_config = [4,4];
-    q_init = q_start_config;
-    q_goal = q_goal_config;
+    q_init = transpose(q_start_config);
+    q_goal = transpose(q_goal_config);
 
     // flag to continue rrt iterations
     rrt_iterate = true;
     rrt_iter_count = 0;
 
+    //Setting variables for the algorithm
+    max = 100;
+    min = -100;
+    // epsilon = 2*(max-min)/100;
+    epsilon = 0.1;
+    inc_dist = Math.sqrt((epsilon*epsilon)+(epsilon*epsilon));
+
+    path = [];
     // set the world for the planner (stored as "range" global variable)
     set_planning_scene();
 
     // make sure the rrt iterations are not running faster than animation update
     cur_time = Date.now();
+    init_time = cur_time;
+    tree_a = tree_init(q_init);
+    tree_b = tree_init(q_goal);
 
 
+	// var connected = false
+
+    /*
+    for (k = 0; k < iter_limit; k++) {
+    	rrt_planning_iteration(tree_a);
+	}
+
+    for (k = 0; k < iter_limit; k++) {
+    	rrt_planning_iteration(tree_b);
+	}
+    draw_robot_world();
+    */
+
+ //    for (k = 0; k < iter_limit; k++) {
+	//     rrt_connect_planner(tree_a, tree_b)
+	// }
+	// draw_robot_world();
 }
 
 
@@ -106,16 +134,209 @@ function animate() {
 
     // make sure the rrt iterations are not running faster than animation update
     if (rrt_iterate && (Date.now()-cur_time > 10)) {
+ 
 
-        //rrt_planning_iteration();
+        // rrt_planning_iteration(tree_a);
+        // rrt_planning_iteration(tree_b);
+        rrt_connect_planner(tree_a, tree_b)
+     	temp = tree_a;
+		tree_a = tree_b;
+		tree_b = temp;
+		// if (e == 500) {
+		// 	rrt_iterate = false;
+		// }
+		// e++;
 
         // update time marker for last iteration update
         cur_time = Date.now();
+        time = (cur_time - init_time)/1000;
+        // console.log(time);
+        rrt_iter_count++;
+
+
 
    }
 
 }
+function connect (q,tree) {
 
+	n_neighbor = nearest_neighbor(q.vertex, tree);
+	a1 = q.vertex[1][0];
+	b1 = q.vertex[0][0];
+
+	a2 = n_neighbor.vertex[1][0];
+	b2 = n_neighbor.vertex[0][0];
+
+	xdiff = b1-b2;
+	ydiff = a1-a2;
+
+	z = (xdiff*xdiff) + (ydiff*ydiff);
+	z = Math.sqrt(z);
+	if (z<inc_dist) {
+		rrt_iterate = false;
+		find_path(q);
+		find_path2(n_neighbor);
+        draw_highlighted_path(path)
+		return true
+	}
+	return false
+}
+
+function find_path(q) {
+
+	//For the first tree
+	while (q.parent != null) {
+        path.unshift(q);	
+		q = q.parent;
+	}
+    path.unshift(q);
+}
+
+function find_path2(q) {
+
+    //For the second tree
+    while (q.parent != null) {
+        path.push(q);   
+        q = q.parent;
+    }
+    path.push(q);  
+}
+
+function rrt_connect_planner(tree_a, tree_b) {
+	q_new = extend(tree_a,random_config());
+
+	if ( q_new != "Trapped") {
+		connect(q_new, tree_b);
+	}
+}
+
+function tree_init(q) {
+
+    // create tree object
+    var tree = {};
+
+    // initialize with vertex for given configuration
+    tree.vertices = [];
+    tree.vertices[0] = {};
+    tree.vertices[0].vertex = q;
+    tree.vertices[0].parent = null;
+
+    // maintain index of newest vertex added to tree
+    tree.newest = 0;
+
+    return tree;
+}
+
+function random_config() {
+    scale = Math.random() * (max - min) + min;
+
+    x = Math.random() * (max - min) + min;
+    z = Math.random() * (max - min) + min;
+
+    q = transpose([x,z]);
+    return q
+}
+
+
+function extend(tree,q) {
+    q_near = nearest_neighbor(q,tree);
+    q_new = new_config(q_near,q, epsilon);
+    if (collision_test(q_new) == false) {
+        q_new = tree_add_vertex(q_new, tree, q_near);
+        return q_new;
+    }
+    return "Trapped";
+}
+
+function nearest_neighbor(rand_q,tree) {
+    shortest_dist = Number.MAX_VALUE;;
+    for (x in tree.vertices) {
+        distance = 0;
+        a = tree.vertices[x].vertex;
+        for (i = 0; i < a.length; i++ ) {
+            diff = rand_q[i][0] - a[i][0];
+            diff = diff*diff;
+            distance += diff;
+        }
+        distance = Math.sqrt(distance);
+        if (distance<shortest_dist) {
+            shortest_dist = distance;
+            n_neighbor = tree.vertices[x];
+        }
+    }
+    return n_neighbor;
+}
+
+function new_config (q_near, q_dest, delta_q) {
+    // Calculating gradient
+    z2 = q_dest[1][0];
+    z1 = q_near.vertex[1][0];
+
+    x2 = q_dest[0][0];
+    x1 = q_near.vertex[0][0];
+
+    a = z2-z1;
+    b = x2-x1;
+
+    len = Math.sqrt((a*a) + (b*b));
+    a = a/len;
+    b = b/len;
+    c = Math.sqrt(a*a + b*b);
+
+    x = x1+ (delta_q*b);
+    z = z1 + (delta_q*a);
+
+    q = transpose([x,z]);
+    return q;
+}
+
+function tree_add_vertex(q,tree,parent) {
+    index = tree.newest + 1;
+
+    tree.vertices[index] = {};
+    tree.vertices[index].vertex = q;
+    tree.vertices[index].parent = parent;
+
+    // create rendering geometry for base location of vertex configuration
+    draw_2D_configuration(q)
+
+    // maintain index of newest vertex added to tree
+    tree.newest = index;
+
+    return tree.vertices[tree.newest];  
+
+}
+
+
+function transpose(matrix) {
+	var result = [];
+
+	//To handle an edge case when the matrix is a row matrix
+	if (matrix[0].length == undefined) {
+		for (var i = 0; i < matrix.length; i++) {
+			result.push([matrix[i]]);
+		}
+		return result
+	}
+
+	for (var i = 0; i < matrix[0].length; i++) {
+		result[i] = [];
+	    for (var j = 0; j < matrix.length; j++) {
+	        result[i][j] = matrix[j][i];
+ 	    }
+	}
+	return result;
+}
+
+// function rrt_planning_iteration(tree) {
+// 	extend(tree,random_config());	
+// }
+
+// function build_rrt(q) {
+//     tree = tree_a(q);
+//     rrt_planning_iteration(tree);
+//     return tree;
+// }
 
 //////////////////////////////////////////////////
 /////     CANVAS DRAWING SUPPORT ROUTINES
@@ -204,12 +425,13 @@ function set_planning_scene() {
     range[7] = [ [2.1,3],[2.2,4] ];
 */
 
-/*  three compartments
+      // three compartments
+
     range[4] = [ [1,1.3],[4,5] ];
     range[5] = [ [1,1.3],[-1,3.5] ];
     range[6] = [ [2.7,3],[-1,0] ];
     range[7] = [ [2.7,3],[.5,5] ];
-*/
+
 
 }
 
