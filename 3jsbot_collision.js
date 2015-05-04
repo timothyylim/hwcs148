@@ -52,7 +52,6 @@ function robot_iscollision() {
     // test whether geometry of current configuration of robot is in collision with planning world 
 
     // form configuration from base location and joint angles
-
     var q_robot_config = [
         robot.origin.xyz[0],
         robot.origin.xyz[1],
@@ -105,6 +104,9 @@ function robot_collision_forward_kinematics (q) {
 
 
 function traverse_collision_forward_kinematics_link(link,mstack,q) {
+
+    console.log(mstack)
+
     mstack_inv = numeric.inv(mstack);
 
 

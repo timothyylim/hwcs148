@@ -20,6 +20,32 @@ function quaternion_from_axisangle(axis,angle) {
 	return result;
 }
 
+function quaternion_to_rotation_matrix(q) {
+	var result = generate_identity();
+    
+    result[0][0] = 1 - 2*(q[2]*q[2]) - 2*(q[3]*q[3]);
+    result[0][1] = 2*q[1]*q[2] - 2*q[3]*q[0];
+    result[0][2] = 2*q[1]*q[3] + 2*q[2]*q[0];
+
+    result[1][0] = 2*q[1]*q[2] + 2*q[3]*q[0];
+    result[1][1] = 1 - 2*(q[1]*q[1]) - 2*(q[3]*q[3]);
+    result[1][2] = 2*q[2]*q[3] - 2*q[1]*q[0];
+
+    result[2][0] = 2*q[1]*q[3] - 2*q[2]*q[0];
+    result[2][1] = 2*q[2]*q[3] + 2*q[1]*q[0];
+    result[2][2] = 1 - 2*(q[1]*q[1]) - 2*(q[2]*q[2]);
+
+    return result;
+}
+
+function generate_quaternion_matrix(joint) {
+    var result = quaternion_from_axisangle(joint.axis, joint.angle);
+    result = quaternion_to_rotation_matrix(result); 
+    return result; 
+
+ }
+
+
 
 function quaternion_normalize(matrix){
     sum = 0;
@@ -54,7 +80,7 @@ function quaternion_normalize(matrix){
             len = Math.sqrt(sum)
         }
     }
-
+    
     for (var i = 0; i < matrix.length; i++) {
         result[i] = [];  
         for (var j = 0; j < matrix[0].length; j++) {
@@ -65,27 +91,3 @@ function quaternion_normalize(matrix){
     return result;
 
 }
-function quaternion_to_rotation_matrix(q) {
-	var result = generate_identity();
-    
-    result[0][0] = 1 - 2*(q[2]*q[2]) - 2*(q[3]*q[3]);
-    result[0][1] = 2*q[1]*q[2] - 2*q[3]*q[0];
-    result[0][2] = 2*q[1]*q[3] + 2*q[2]*q[0];
-
-    result[1][0] = 2*q[1]*q[2] + 2*q[3]*q[0];
-    result[1][1] = 1 - 2*(q[1]*q[1]) - 2*(q[3]*q[3]);
-    result[1][2] = 2*q[2]*q[3] - 2*q[1]*q[0];
-
-    result[2][0] = 2*q[1]*q[3] - 2*q[2]*q[0];
-    result[2][1] = 2*q[2]*q[3] + 2*q[1]*q[0];
-    result[2][2] = 1 - 2*(q[1]*q[1]) - 2*(q[2]*q[2]);
-
-    return result;
-}
-
-function generate_quaternion_matrix(joint) {
-    var result = quaternion_from_axisangle(joint.axis, joint.angle);
-    result = quaternion_to_rotation_matrix(result); 
-    return result; 
-
- }
