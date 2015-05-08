@@ -1,7 +1,7 @@
 57: Timothy Lim
  Assignment 1: CHECK
  
- Assignment 2: DUE
+ Assignment 2: CHECK
  error: euler integrator is incorrect
  comment: why is euler integrator stable?
  error: velocity verlet integrator gains energy
@@ -11,20 +11,30 @@
  comment: double check each variable and its use in time
  error: velocity verlet integrator gains energy
  comment: control torque, not time, should not be used in equation of motion
+ regrade2: euler integrator is unstable
+ regrade3: working, but controller drives system to immediate instability
  
  Assignment 3: CANCELLED
  
- Assignment 4: DUE
+ Assignment 4: CHECK
+ error: branch not found
+ regrade: public test crawler produces error (browser crash)
+ regrade2: working
+ 
+ Assignment 5: CHECK
+ error: branch not found
+ regrade: PD controller does not move to appropriate motion desireds
+ regrade: working from Assignment-6 branch
+ 
+ Assignment 6: CHECK
+ error: branch not found
+ regrade: working
+ 
+ Assignment 7: DUE
  error: branch not found
  
- Assignment 5: DUE
- error: branch not found
+ Assignment 8: CHECK
  
- Assignment 6: DUE
- error: branch not found
- 
- Assignment 7: PENDING
- 
- Assignment 8: PENDING
+ Current grade: B (6/7 assignments completed)
  
 
