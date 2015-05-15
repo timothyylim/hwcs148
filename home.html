@@ -151,14 +151,14 @@ function init_robot() {
     //Assignment 7
 
     // set scene for planner
-    // robot_set_planning_scene();
+    robot_set_planning_scene();
 
-    // // initialize flags for executing planner
-    // generating_motion_plan = false;
-    // generate_motion_plan = false;
+    // initialize flags for executing planner
+    generating_motion_plan = false;
+    generate_motion_plan = false;
 
-    // robot_path = [];
-    // robot_path_traverse_idx = 0;
+    robot_path = [];
+    robot_path_traverse_idx = 0;
 }
 
 // CS148: nothing to add here 
@@ -268,23 +268,23 @@ function my_animate() {
 
     //Assignment 7
 
-    // robot_iscollision();
+    robot_iscollision();
     
-    // if ((generate_motion_plan) && (!generating_motion_plan)) {
-    //     robot_rrt_planner_init();
+    if ((generate_motion_plan) && (!generating_motion_plan)) {
+        robot_rrt_planner_init();
 
-    //     generating_motion_plan = true;
-    //     generate_motion_plan = false;
-    // }
-    // if (generating_motion_plan) {
-    //     //robot_rrt_connect(q_desired);
-    //     rrt_result = robot_rrt_planner_iterate();
-    //     // console.log(rrt_result);
-    //     if (rrt_result == "reached") {
-    //         //alert("home: reached");
-    //         generating_motion_plan = false;
-    //     }
-    // }
+        generating_motion_plan = true;
+        generate_motion_plan = false;
+    }
+    if (generating_motion_plan) {
+        //robot_rrt_connect(q_desired);
+        rrt_result = robot_rrt_planner_iterate();
+        // console.log(rrt_result);
+        if (rrt_result == "reached") {
+            //alert("home: reached");
+            generating_motion_plan = false;
+        }
+    }
     
 }
 
