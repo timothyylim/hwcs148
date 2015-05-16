@@ -33,9 +33,13 @@
  
  Assignment 7: DUE
  error: branch not found
+ regrade: planner does not provide motion path solution within time bound
+ error: failure on public test with s world
+ comment: randomization does not sufficiently sample configuration space
+ comment: functions extend and connect does not adhere to rrt-connect algorithm such that trees do not properly connect viable valid paths
  
  Assignment 8: CHECK
  
- Current grade: B (6/7 assignments completed)
+ Final grade: B (6/7 assignments completed)
  
 
