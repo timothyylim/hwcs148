@@ -54,14 +54,12 @@ function robot_rrt_planner_init() {
 
     // flag to continue rrt iterations
     rrt_iterate = true;
-    rrt_iter_count = 0;
-    iter_limit = 0;
 
     //Setting variables for the algorithm
-    x_max = robot_boundary[1][0];
-    x_min = robot_boundary[0][0];
-    z_max = robot_boundary[1][0];
-    z_min = robot_boundary[0][0];
+    x_max = robot_boundary[1][0] + 2;
+    x_min = robot_boundary[0][0] - 2;
+    z_max = robot_boundary[1][0] + 2;
+    z_min = robot_boundary[0][0] - 2;
 
     epsilon = 0.5;
     distance = 0;
@@ -72,34 +70,125 @@ function robot_rrt_planner_init() {
     inc_dist = Math.sqrt(distance);
     robot_path = new Array();
 
+    // make sure the rrt iterations are not running faster than animation update
     cur_time = Date.now();
     init_time = cur_time;
-    tree_a = tree_init(q_goal_config);
-    tree_b = tree_init(q_start_config);
+    tree_1 = tree_init(q_goal_config);
+    tree_2 = tree_init(q_start_config);
 }
 
-function tree_add_vertex(q,tree,parent) {
-    i = tree.newest + 1;
 
-    tree.vertices[i] = {};
-    tree.vertices[i].vertex = q;
-    tree.vertices[i].parent = parent;
+function robot_rrt_planner_iterate() {
 
-    add_config_origin_indicator_geom(tree.vertices[i]);
-    tree.newest = i;
+    rrt_alg = 1;  // 0: basic rrt (OPTIONAL), 1: rrt_connect (REQUIRED)
 
-    return tree.vertices[tree.newest];  
+    if (rrt_iterate && (Date.now()-cur_time > 10)) {
+        cur_time = Date.now();
 
+        // CS148: implement RRT iteration here
+        rrt_out = rrt_connect_planner(tree_1, tree_2)
+        temp = tree_1;
+        tree_1 = tree_2;
+        tree_2 = temp;
+
+        // update time marker for last iteration update
+        cur_time = Date.now();
+
+        return rrt_out;
+
+    }
+
+    // return path not currently found
+    return false;
+}
+
+function rrt_connect_planner(tree1, tree2) {
+    new_vertex = extend(tree1,random_config());
+
+    if ( new_vertex != "Trapped") {
+        isConnected = connect(new_vertex, tree2);
+    }
+    return isConnected;
+}
+
+function connect (q,tree) {
+    near_neighbor = nearest_neighbor(q.vertex, tree);
+    sum_distance = 0;
+
+    for (i = 0; i < q.vertex.length; i++ ) {
+        dist1 = near_neighbor.vertex[i] - q.vertex[i];
+        dist1_square = dist1*dist1;
+        sum_distance += dist1_square;
+    }
+
+    final_distance = Math.sqrt(sum_distance);
+    if (final_distance<inc_dist) {
+        rrt_iterate = false;
+        find_path(q,near_neighbor);
+        return "reached"
+    }
+    return false
+}
+
+function find_path(q1,q2) {
+    //For the first tree
+    while (q1.parent != null) {
+        robot_path.unshift(q1);    
+        q1 = q1.parent;
+    }
+    robot_path.unshift(q1);
+
+    //For the second tree
+    while (q2.parent != null) {
+        robot_path.push(q2);   
+        q2 = q2.parent;
+    }
+    robot_path.push(q2);
+
+    //Drawing out the Path
+
+    for (i=0;i<robot_path.length;i++) {
+        robot_path[i].geom.material.color = {r:1,g:0,b:0};
+    }
+
+}
+function tree_init(q) {
+
+    // create tree object
+    var tree = {};
+
+    // initialize with vertex for given configuration
+    tree.vertices = [];
+    tree.vertices[0] = {};
+    tree.vertices[0].vertex = q;
+    tree.vertices[0].parent = null;
+
+    // create rendering geometry for base location of vertex configuration
+    add_config_origin_indicator_geom(tree.vertices[0]);
+
+    // maintain index of newest vertex added to tree
+    tree.newest = 0;
+
+    return tree;
+}
+
+function extend(tree,q) {
+    q_near = nearest_neighbor(q,tree);
+    q_new = new_config(q_near,q, epsilon);
+    if (robot_collision_test(q_new) == false) {
+        q_new = tree_add_vertex(q_new, tree, q_near);
+        return q_new;
+    }
+    return "Trapped";
 }
 
 function random_config() {
 
-    x = (x_max - x_min) * Math.random() + x_min;
-    z = (z_max - z_min) * Math.random() + z_min;
-    p = Math.random() * Math.PI *2;
-    
+    x = Math.random() * (x_max - x_min) + x_min;
     y = 0;
+    z = Math.random() * (z_max - z_min) + z_min;
     r = 0;
+    p = Math.random() * Math.PI *2;
     rot_y = 0;
 
     q = [x,y,z,r,p,rot_y];
@@ -111,168 +200,60 @@ function random_config() {
     return q
 }
 
+function nearest_neighbor(q_random,tree) {
+    shortest_dist = Number.MAX_VALUE;;
+    for (x in tree.vertices) {
+        sum_distance = 0;
 
-function new_config (qNear, q_dest, delta_q) {
+        vertex = tree.vertices[x].vertex;
 
-    vect = [];
-    q = [];
+        for (i = 0; i < vertex.length; i++ ) {
+            dist1 = q_random[i] - vertex[i];
+            dist1_square = dist1*dist1;
+            sum_distance += dist1_square;
+        }
+
+        final_distance = Math.sqrt(sum_distance);
+        if (final_distance<shortest_dist) {
+            shortest_dist = final_distance;
+            near_neighbor = tree.vertices[x];
+        }
+    }
+    return near_neighbor;
+}
+
+function new_config (q_near, q_dest, incremental_distance) {
+    vector = [];
+    output = [];
 
     for (i=0;i<q_dest.length; i++) {
-        vect[i] = q_dest[i] - qNear.vertex[i]; 
+        vector[i] = q_dest[i] - q_near.vertex[i]; 
     }
 
-    norm_vect = quaternion_normalize(vect);
+    norm_vector = quaternion_normalize(vector);
 
-    for (i=0;i<qNear.vertex.length; i++) {
-        q[i] = qNear.vertex[i] + (norm_vect[i]*delta_q); 
+    for (i=0;i<q_near.vertex.length; i++) {
+        output[i] = q_near.vertex[i] + (norm_vector[i]*incremental_distance); 
     }
-
-    return q;
+    return output;
 } 
 
+function tree_add_vertex(q,tree,parent) {
+    index = tree.newest + 1;
 
-function nearest_neighbor(rand_q,tree) {
-    shortestDistance = Number.MAX_VALUE;;
-    for (x in tree.vertices) {
-        distance = 0;
-        a = tree.vertices[x].vertex;
+    tree.vertices[index] = {};
+    tree.vertices[index].vertex = q;
+    tree.vertices[index].parent = parent;
 
-        for (i = 0; i < a.length; i++ ) {
-            difference = (rand_q[i] - a[i])*(rand_q[i] - a[i]);
-            distance += difference;
-        }
+    // create rendering geometry for base location of vertex configuration
+    add_config_origin_indicator_geom(tree.vertices[index]);
 
-        distance = Math.sqrt(distance);
-        if (distance<shortestDistance) {
-            shortestDistance = distance;
-            NearestNeighbour  = tree.vertices[x];
-        }
-    }
-    return NearestNeighbour ;
+    // maintain index of newest vertex added to tree
+    tree.newest = index;
+
+    return tree.vertices[tree.newest];  
+
 }
-
-
-function rrt_extend(tree,q) {
-
-    qNear = nearest_neighbor(q,tree);
-    qNew = new_config(qNear,q, epsilon);
-
-    if (robot_collision_test(qNew) == false) {
-        return tree_add_vertex(qNew, tree, qNear);
-    }
-    return "Trapped";
-}
-
-
-function rrt_connect (q,tree) {
-
-    NearestNeighbour  = nearest_neighbor(q.vertex, tree);
-    distance = 0;
-    
-
-
-    for (i = 0; i < q.vertex.length; i++ ) {
-
-        difference = NearestNeighbour .vertex[i] - q.vertex[i];
-        difference = difference*difference;
-        distance += difference;
-    }
-
-    z = Math.sqrt(distance);
-    
-
-    if (z<inc_dist) {
-        rrt_iterate = false;
-        find_path(q, true);
-        find_path(NearestNeighbour , false);
-        time = (Date.now()- init_time)/1000;
-        console.log("The time is " + time);
-
-        for (i=0;i<robot_path.length;i++) {
-            robot_path[i].geom.material.color = {r:1,g:0,b:0};
-        }
-
-        return "reached"
-    }
-    return false
-}
-
-
-function find_path(q, bool) {
-
-    if (bool == true){
-
-        while (q.parent != null) {
-            robot_path.unshift(q);    
-            q = q.parent;
-        }
-        robot_path.unshift(q);  
-
-    }
-
-    else{
-
-        while (q.parent != null) {
-            robot_path.push(q);   
-            q = q.parent;
-        }
-        robot_path.push(q); 
-    }
-}
-
-
-function robot_rrt_planner_iterate() {
-
-    rrt_alg = 1;  // 0: basic rrt (OPTIONAL), 1: rrt_connect (REQUIRED)
-
-    if (rrt_iterate && (Date.now()-cur_time > 10)) {
-        cur_time = Date.now();
-
-        var output = rrt_connect_planner(tree_a, tree_b)
-        temp = tree_a;
-        tree_a = tree_b;
-        tree_b = temp;
-        rrt_iter_count++;
-
-        cur_time = Date.now();
-
-        return output;
-
-    }
-
-    return false;
-}
-
-function rrt_connect_planner(tree_a, sree_b) {
-    qNew = rrt_extend(tree_a,random_config());
-
-    if ( qNew != "Trapped") {
-        var connected = rrt_connect(qNew, tree_b);
-    }
-    return connected;
-}
-
-
-function tree_init(q) {
-
-    var tree = {};
-
-    tree.vertices = [];
-    tree.vertices[0] = {};
-    tree.vertices[0].vertex = q;
-    tree.vertices[0].parent = null;
-
-    add_config_origin_indicator_geom(tree.vertices[0]);
-
-    tree.newest = 0;
-
-    return tree;
-}
-
-
-
-
-
 
 function add_config_origin_indicator_geom(vertex) {
 
